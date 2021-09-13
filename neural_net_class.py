@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.special
+import matplotlib.pyplot
 
 class NeuralNet:
     def __init__(self, input_nodes, hidden_nodes, output_nodes, learning_rate):
@@ -55,12 +56,50 @@ class NeuralNet:
         output_layer_input = np.dot(self.hidden_to_output_weights, hidden_layer_output)
         output_layer_output = self.activation_fuction(output_layer_input)
 
-        print(output_layer_output)
+        return output_layer_output
 
 
 if __name__ == '__main__':
-    input_nodes =  3
-    output_nodes = 3
-    hidden_nodes = 3
+    input_nodes =  784 # image is 28 by 28
+    output_nodes = 10
+    hidden_nodes = 100
     learning_rate = 0.3
+
     net = NeuralNet(input_nodes, hidden_nodes, output_nodes, learning_rate)
+
+    data_file = open('./mnist_train_100.csv', 'r')
+    data_list = data_file.readlines()
+    data_file.close()
+
+    for number in data_list:
+        all_values = number.split(',')
+        scaled_input = (np.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+        # preparing the training data
+        output_nodes = 10
+        target_output = np.zeros(output_nodes) + 0.01
+        target_output[int(all_values[0])] = 0.99
+        net.train(scaled_input, target_output)
+
+    test_data_file = open('./mnist_test_10.csv', 'r')
+    test_data_list = test_data_file.readlines()
+    test_data_file.close()
+
+    # testing neural network
+    score = []
+    for record in test_data_list:
+        all_values = record.split(',')
+        correct_label = int(all_values[0])
+        print('Correct label is {}'.format(correct_label))
+        inputs = (np.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+        outputs = net.query(inputs)
+        label = np.argmax(outputs)
+        print('Network predicts {}'.format(label))
+        if (label == correct_label):
+            score.append(1)
+        else:
+            score.append(0)
+        print('\n')
+    
+    scorecard_array = np.asarray(score)
+    performance_score = scorecard_array.sum() / scorecard_array.size
+    print('performance score is {}'.format(performance_score))
